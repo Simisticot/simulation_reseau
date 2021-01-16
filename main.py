@@ -34,12 +34,16 @@ class reseau:
                 collisions += 1
         print("Résumé des transmissions : ")
         print(str(succes)+" transmissions réussies")
+        print(str((succes/(succes+succes_partiels+collisions)*100))+"% de succes complets")
         print(str(succes_partiels)+" transmissions sauvées")
+        print(str((succes_partiels+succes)/(succes+succes_partiels+collisions)*100)+"% de succes partiels ou complets")
         print(str(collisions)+" pertes via collision")
+        print(str(collisions / (succes + succes_partiels + collisions) * 100) + "% d'echecs'")
 
     def sauvegarder_rewards(self):
         for x in self.emetteurs:
             x.sauvegarder_reward()
+
 
 class strat:
     def __init__(self, nbcopies):
