@@ -1,6 +1,7 @@
 import random
 import math
 import copy
+import matplotlib.pyplot as plt
 
 
 class reseau:
@@ -43,6 +44,35 @@ class reseau:
     def sauvegarder_rewards(self):
         for x in self.emetteurs:
             x.sauvegarder_reward()
+
+    def pourcentage_reussite(self):
+        succes = 0
+        envois_totaux = 0
+        for x in self.emetteurs:
+            envois_totaux += x.paquets_envoyes
+        for x in self.emetteurs:
+            for y in x.historique_rewards:
+                if y > 0.1:
+                    succes += 1
+        return (succes / envois_totaux) * 100
+
+    def historique_reussites(self, iterations):
+        reussites = []
+        for x in range (0, iterations, 1):
+            paquets_emis = 0
+            collisions = 0
+            for y in self.emetteurs:
+                if y.emissions[x]:
+                    paquets_emis += 1
+                    if y.historique_rewards[x] == 0.1:
+                        collisions += 1
+            if paquets_emis == 0:
+                reussites.append(100)
+            else:
+                reussites.append((collisions/paquets_emis)*100)
+        return reussites
+
+
 
 
 class strat:
@@ -200,9 +230,23 @@ def simulation(intensite, t, nbemetteurs):
         rez.bs.reward_post_sic(rez.emetteurs)
         rez.bs.sauvegarder_post_sic()
         rez.sauvegarder_rewards()
-    print("done")
-    rez.print_resume_iteration(t-1)
+    return rez.pourcentage_reussite()
 
 
-simulation(0.5, 10, 10)
+reussites = []
+for l in range(1, 50, 1):
+    total = 0
+    for x in range(0,10,1):
+        total += simulation(l/10, 1000, 10)
+    reussites.append(total/10)
+fig, ax = plt.subplots()
+plt.plot(range(1, 50, 1), reussites)
+plt.show()
 print("cc")
+
+# TODO
+# objet simulation
+# fonction nbcopies uniforme
+# cas de test % utilisation statégies pour lambda et nbequipements
+# cas de test gain moyen pour lambda et nbequipements
+# répétition des cas de test avec la fonction nbcopies uniforme
