@@ -79,6 +79,18 @@ class reseau:
             total += e.gain_moyen()
         return total/self.nbemetteurs
 
+    def pourcentages_utilisation(self):
+        utilisation = {
+            0: 0,
+            2: 0,
+            3: 0,
+            4: 0
+        }
+        for e in self.emetteurs:
+            for i in e.historique_strats:
+                utilisation[i] += 1
+        return utilisation
+
 
 
 
@@ -303,7 +315,18 @@ def test_variation_nb_equipements(mab):
     plt.show()
 
 
+def test_utilisation_strats(mab):
+    accumulation_utilisations = {0: 0, 2: 0, 3: 0, 4: 0}
+    for i in range(0, 100, 1):
+        sim = Simulation(0.5, 1000, 10, mab)
+        utilisation = sim.rez.pourcentages_utilisation()
+        for j in utilisation:
+            accumulation_utilisations[j] += utilisation[j]
+    total = 0
+    for i in accumulation_utilisations:
+        total += accumulation_utilisations[i]
+    total -= accumulation_utilisations[0]
+    for i in range(2, 5, 1):
+        print("Stratégie "+str(i)+" : "+str((accumulation_utilisations[i]/total)*100)+"%")
 
-test_variation_nb_equipements(False)
-# TODO
-# cas de test % utilisation statégies pour lambda et nbequipements
+# Appeler les fonctions cas de test ici :
