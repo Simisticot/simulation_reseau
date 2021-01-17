@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 class reseau:
     def __init__(self, nbemetteurs, intensite, t):
         self.bs = BS()
+        self.nbemetteurs = nbemetteurs
         self.emetteurs = []
         for x in range(0, nbemetteurs, 1):
             self.emetteurs.append(emetteur(x, t, intensite))
@@ -72,6 +73,13 @@ class reseau:
                 reussites.append((collisions/paquets_emis)*100)
         return reussites
 
+    def gain_moyen(self):
+        total = 0
+        for e in self.emetteurs:
+            total += e.gain_moyen()
+        return total/self.nbemetteurs
+
+
 
 
 
@@ -119,24 +127,27 @@ class emetteur:
         self.derniere_strat.reward(reward)
         self.reward_courant += reward
 
-    def nb_copies(self):
-        if len(self.strat_vierges) > 0:
-            strat = random.choice(self.strat_vierges)
-            self.strat_vierges.remove(strat)
+    def nb_copies(self, mab):
+        if mab:
+            if len(self.strat_vierges) > 0:
+                strat = random.choice(self.strat_vierges)
+                self.strat_vierges.remove(strat)
+            else:
+                valeur = 0
+                for x in self.strat:
+                    if x.valeur(self.paquets_envoyes) > valeur:
+                        valeur = x.valeur(self.paquets_envoyes)
+                        strat = x
         else:
-            valeur = 0
-            for x in self.strat:
-                if x.valeur(self.paquets_envoyes) > valeur:
-                    valeur = x.valeur(self.paquets_envoyes)
-                    strat = x
+            strat = random.choice(self.strat)
         self.derniere_strat = strat
         strat.nbutilisations += 1
         return strat.nbcopies
 
-    def envoyer_paquet(self, iteration):
+    def envoyer_paquet(self, iteration, mab):
         if self.emissions[iteration]:
             self.paquets_envoyes += 1
-            nbcopies = self.nb_copies()
+            nbcopies = self.nb_copies(mab)
         else:
             nbcopies = 0
         self.historique_strats.append(nbcopies)
@@ -145,6 +156,12 @@ class emetteur:
     def sauvegarder_reward(self):
         self.historique_rewards.append(self.reward_courant)
         self.reward_courant = 0
+
+    def gain_moyen(self):
+        total = 0
+        for s in self.strat:
+            total += s.reward_total/s.nbutilisations
+        return total/3
 
 
 class BS:
@@ -172,9 +189,9 @@ class BS:
     def print_trames(self):
         print(str(self.trame))
 
-    def recevoir_paquets(self, emetteurs, iteration):
+    def recevoir_paquets(self, emetteurs, iteration, mab):
         for x in emetteurs:
-            envoi = x.envoyer_paquet(iteration)
+            envoi = x.envoyer_paquet(iteration, mab)
             positions = random.sample(range(0, 10, 1), envoi)
             for y in positions:
                 self.trame[y].append(x.identifiant)
@@ -219,34 +236,74 @@ def poisson(l):            # Renvois un entier selon le processus de poisson ave
     return x
 
 
-def simulation(intensite, t, nbemetteurs):
-    rez = reseau(nbemetteurs, intensite, t)
+class Simulation:
+    def __init__(self, intensite, t, nbemetteurs, mab):
+        self.rez = reseau(nbemetteurs, intensite, t)
 
-    for x in range(0, t, 1):
-        rez.bs.recevoir_paquets(rez.emetteurs, x)
-        rez.bs.reward_pre_sic(rez.emetteurs)
-        rez.bs.sauvegarder_pre_sic()
-        rez.bs.cancel_interference()
-        rez.bs.reward_post_sic(rez.emetteurs)
-        rez.bs.sauvegarder_post_sic()
-        rez.sauvegarder_rewards()
-    return rez.pourcentage_reussite()
+        for x in range(0, t, 1):
+            self.rez.bs.recevoir_paquets(self.rez.emetteurs, x, mab)
+            self.rez.bs.reward_pre_sic(self.rez.emetteurs)
+            self.rez.bs.sauvegarder_pre_sic()
+            self.rez.bs.cancel_interference()
+            self.rez.bs.reward_post_sic(self.rez.emetteurs)
+            self.rez.bs.sauvegarder_post_sic()
+            self.rez.sauvegarder_rewards()
 
 
-reussites = []
-for l in range(1, 50, 1):
+def test_mab_vs_uniforme():
     total = 0
-    for x in range(0,10,1):
-        total += simulation(l/10, 1000, 10)
-    reussites.append(total/10)
-fig, ax = plt.subplots()
-plt.plot(range(1, 50, 1), reussites)
-plt.show()
-print("cc")
+    for i in range(0, 100, 1):
+        sim = Simulation(0.5, 1000, 10, True)
+        total += sim.rez.gain_moyen()
+    print("Gain moyen mab : "+str(total/100))
 
+    total = 0
+    for i in range(0, 100, 1):
+        sim = Simulation(0.5, 1000, 10, False)
+        total += sim.rez.gain_moyen()
+    print("Gain moyen uniforme : "+str(total/100))
+
+
+def test_variation_lambda():
+    gain_moyen = []
+    for l in range(1, 50, 1):
+        total = 0
+        for i in range(1, 10, 1):
+            sim = Simulation(l/10, 1000, 10, True)
+            total += sim.rez.gain_moyen()
+        gain_moyen.append(total/10)
+    fig, ax = plt.subplots()
+    plt.plot(range(1, 50, 1), gain_moyen)
+    plt.show()
+
+
+def test_variation_lambda_restreint(mab):
+    gain_moyen = []
+    for l in range(1, 9, 1):
+        total = 0
+        for i in range(0, 10, 1):
+            sim = Simulation(l / 10, 1000, 10, mab)
+            total += sim.rez.gain_moyen()
+        gain_moyen.append(total / 10)
+    fig, ax = plt.subplots()
+    plt.plot(range(1, 9, 1), gain_moyen)
+    plt.show()
+
+
+def test_variation_nb_equipements(mab):
+    gain_moyen = []
+    for e in range(1, 21, 1):
+        total = 0
+        for i in range(0, 10, 1):
+            sim = Simulation(0.5, 1000, e, mab)
+            total += sim.rez.gain_moyen()
+        gain_moyen.append(total/10)
+    fig, ax = plt.subplots()
+    plt.plot(range(1, 21, 1), gain_moyen)
+    plt.show()
+
+
+
+test_variation_nb_equipements(False)
 # TODO
-# objet simulation
-# fonction nbcopies uniforme
 # cas de test % utilisation statégies pour lambda et nbequipements
-# cas de test gain moyen pour lambda et nbequipements
-# répétition des cas de test avec la fonction nbcopies uniforme
