@@ -92,9 +92,6 @@ class reseau:
         return utilisation
 
 
-
-
-
 class strat:
     def __init__(self, nbcopies):
         self.nbcopies = nbcopies
@@ -123,14 +120,13 @@ class emetteur:
         for x in self.strat:
             self.strat_vierges.append(x)
         self.emissions = []
-        self.nbemissions = poisson(intensite*t)
-        if self.nbemissions > t:
-            self.nbemissions = t
         for x in range(0, t, 1):
             self.emissions.append(False)
-        num_emissions = random.sample(range(0, t, 1), self.nbemissions)
-        for x in num_emissions:
-            self.emissions[x] = True
+        prochain_envoi = -1
+        prochain_envoi += math.ceil(exponentielle(intensite))
+        while prochain_envoi < t:
+            self.emissions[prochain_envoi] = True
+            prochain_envoi += math.ceil(exponentielle(intensite))
         self.historique_strats = []
         self.historique_rewards = []
         self.reward_courant = 0
@@ -248,6 +244,11 @@ def poisson(l):            # Renvois un entier selon le processus de poisson ave
     return x
 
 
+def exponentielle(intensite):
+    u = random.uniform(0.0, 1.0)
+    return -math.log(u)/intensite
+
+
 class Simulation:
     def __init__(self, intensite, t, nbemetteurs, mab):
         self.rez = reseau(nbemetteurs, intensite, t)
@@ -329,4 +330,6 @@ def test_utilisation_strats(mab):
     for i in range(2, 5, 1):
         print("Stratégie "+str(i)+" : "+str((accumulation_utilisations[i]/total)*100)+"%")
 
+
 # Appeler les fonctions cas de test ici :
+test_mab_vs_uniforme()
