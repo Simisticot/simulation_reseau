@@ -308,28 +308,34 @@ def test_mab_vs_uniforme():
     for i in range(0, 100, 1):
         sim = Simulation(0.5, 1000, 10, False, [2, 3, 4])
         totaluni += sim.rez.gain_moyen()
-
+    
     x = ["MAB", "Uniforme"]
     height = [totalmab / 100, totaluni / 100]
+    print("Gain moyen des deux méthodes : ", height)
     plt.bar(x, height, [0.5, 0.5])
     plt.ylabel('Gain moyen')
     plt.title("Comparaison des gains moyens entre méthodes\nlambda = 0.5 et nb émetteur = 10")
     plt.show()
 
 # Calcule les gains moyens sur plusieurs simulations avec differents lambdas pour la stratégie MAB
-def test_variation_lambda():
+def test_variation_lambda(mab):
     gain_moyen = []
     for l in range(1, 50, 1):
         total = 0
         for i in range(1, 10, 1):
-            sim = Simulation(l / 10, 1000, 10, True, [2, 3, 4])
+            sim = Simulation(l / 10, 1000, 10, mab, [2, 4, 8])
             total += sim.rez.gain_moyen()
         gain_moyen.append(total / 10)
-    
-    plt.title("Méthode MAB : variation du gain moyen en fonction de lambda")
+    x = []
+    for i in range(1, 50, 1):
+        x.append(i/10)
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.title(ch + " : variation du gain moyen en fonction de lambda")
     plt.xlabel("Lambda")
     plt.ylabel("Gain moyen")
-    plt.plot(range(1, 50, 1), gain_moyen)
+    plt.plot(x, gain_moyen)
     plt.show()
 
 # Calcule les gains moyens sur plusieurs simulations avec differents lambdas (limité à 9) quelque soit la strategie
@@ -358,7 +364,7 @@ def test_variation_lambda_restreint(mab):
 # Test les gains moyens sur plusieurs simulations en fonction du nombre d'équipement
 def test_variation_nb_equipements(mab):
     gain_moyen = []
-    for e in range(1, 21, 1):
+    for e in range(1, 50, 1):
         total = 0
         for i in range(0, 10, 1):
             sim = Simulation(0.5, 1000, e, mab, [2, 3, 4])
@@ -371,7 +377,7 @@ def test_variation_nb_equipements(mab):
     plt.title(ch + " : variation du gain moyen en fonction du nombre d'équipements")
     plt.xlabel("Nb d'équipements")
     plt.ylabel("Gain moyen")
-    plt.plot(range(1, 21, 1), gain_moyen)
+    plt.plot(range(1, 50, 1), gain_moyen)
     plt.show()
 
 # Test et renvoie le pourcentage d'utilisation des stratégies utilisées
@@ -396,6 +402,7 @@ def test_utilisation_strats(mab):
     for i in Tabstrat:
         tab.append((accumulation_utilisations[i] / total) * 100)
         x.append(str(i))
+    print("Pourcentage d'utilisation des stratégies", tab)
     ch = "Méthode uniforme"
     if mab :
         ch ="Méthode MAB"
@@ -524,9 +531,10 @@ def test_transmis_envoyes(mab):
 # Appeler les fonctions cas de test ici :
 # test_transmis_envoyes(True)
 # test_transmis_envoyes(False)
-# # test_gain_emetteur(True)
+# test_gain_emetteur(True)
 # test_gain_emetteur(False)
-# # test_variation_lambda_restreint(True)
+# test_variation_lambda(True)
+# test_variation_lambda(False)
 # test_variation_lambda_restreint(False)
 # test_variation_nb_equipements(True)
 # test_variation_nb_equipements(False)
