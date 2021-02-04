@@ -9,7 +9,7 @@ import copy
 import matplotlib.pyplot as plt
 
 
-""" Classe qui modélise l'ensemble du réseau"""
+""" Classe qui modélise l'ensemble du réseau """
 class reseau:
 
     # Un réseau est composé d'une station de base BS et d'un ensemble d'emetteurs
@@ -28,8 +28,8 @@ class reseau:
     # Affiche l'ensemble du réseau et l'état des transmissions à une itération donnée
     def print_resume_iteration(self, iteration):
         for x in self.emetteurs:
-            print("Stratégie de l'emetteur "+str(x.identifiant)+" : "+str(x.historique_strats[iteration])+" copies")
-            print("Récompense obtenue : "+str(x.historique_rewards[iteration]))
+            print("Stratégie de l'emetteur " + str(x.identifiant) + " : " + str(x.historique_strats[iteration]) + " copies")
+            print("Récompense obtenue : " + str(x.historique_rewards[iteration]))
         print("Trame avant sic :")
         print(str(self.bs.historique_pre_sic[iteration]))
         print("Trame après sic :")
@@ -45,11 +45,11 @@ class reseau:
             if x.historique_rewards[iteration] == 0.1:
                 collisions += 1
         print("Résumé des transmissions : ")
-        print(str(succes)+" transmissions réussies")
-        print(str((succes/(succes+succes_partiels+collisions)*100))+"% de succes complets")
-        print(str(succes_partiels)+" transmissions sauvées")
-        print(str((succes_partiels+succes)/(succes+succes_partiels+collisions)*100)+"% de succes partiels ou complets")
-        print(str(collisions)+" pertes via collision")
+        print(str(succes) + " transmissions réussies")
+        print(str((succes / (succes + succes_partiels + collisions) * 100)) + "% de succes complets")
+        print(str(succes_partiels) + " transmissions sauvées")
+        print(str((succes_partiels + succes) / (succes + succes_partiels + collisions) * 100) + "% de succes partiels ou complets")
+        print(str(collisions) + " pertes via collision")
         print(str(collisions / (succes + succes_partiels + collisions) * 100) + "% d'echecs'")
 
     # Enregistre les récompenses des emetteurs
@@ -83,7 +83,7 @@ class reseau:
             if paquets_emis == 0:
                 reussites.append(100)
             else:
-                reussites.append((collisions/paquets_emis)*100)
+                reussites.append((collisions / paquets_emis) * 100)
         return reussites
 
     # Renvoie le gain moyen des emetteurs
@@ -91,7 +91,7 @@ class reseau:
         total = 0
         for e in self.emetteurs:
             total += e.gain_moyen()
-        return total/self.nbemetteurs
+        return total / self.nbemetteurs
 
     # Renvoie le poucentage d'utilisation des différentes stratégies
     def pourcentages_utilisation(self,Tabstrat):
@@ -121,7 +121,7 @@ class strat:
         if self.reward_total == 0:
             valeur = 0
         else:
-            valeur = (self.reward_total/self.nbutilisations) + math.sqrt((2*math.log(paquets_envoyes)/self.nbutilisations))
+            valeur = (self.reward_total / self.nbutilisations) + math.sqrt((2 * math.log(paquets_envoyes) / self.nbutilisations))
         return valeur
 
 """ Classe qui modélise un emetteur """
@@ -190,8 +190,16 @@ class emetteur:
     def gain_moyen(self):
         total = 0
         for s in self.strat:
-            total += s.reward_total/s.nbutilisations
-        return total/3
+            total += s.reward_total / s.nbutilisations
+        return total / 3
+    
+    def reussite_emetteur(self):
+        succes = 0
+        for y in self.historique_rewards:
+            if y > 0.1:
+                succes += 1
+        return succes
+
 
 """ Station de base """
 class BS:
@@ -274,35 +282,39 @@ class Simulation:
             self.rez.bs.sauvegarder_post_sic()
             self.rez.sauvegarder_rewards()
 
-
 # Renvoie un entier selon le processus de poisson avec l = lambda
 def poisson(l):            
     x = 0
     p = 1
-    p = p*random.uniform(0, 1)
+    p = p * random.uniform(0, 1)
     while p > math.exp(-l):
-            x = x+1
-            p = p*random.uniform(0, 1)
+            x = x + 1
+            p = p * random.uniform(0, 1)
     return x
 
 # Renvoie l'intervalle de temps entre deux reception de paquets
 def exponentielle(intensite):
     u = random.uniform(0.0, 1.0)
-    return -math.log(u)/intensite
+    return -math.log(u) / intensite
 
 # Simule et compare les stratégies MAB et la répartition uniforme
 def test_mab_vs_uniforme():
-    total = 0
+    totalmab = 0
+    totaluni = 0
     for i in range(0, 100, 1):
-        sim = Simulation(0.5, 1000, 10, True, [2,3,4])
-        total += sim.rez.gain_moyen()
-    print("Gain moyen mab : "+str(total/100))
+        sim = Simulation(0.5, 1000, 10, True, [2, 3, 4])
+        totalmab += sim.rez.gain_moyen()
 
-    total = 0
     for i in range(0, 100, 1):
-        sim = Simulation(0.5, 1000, 10, False, [2,3,4])
-        total += sim.rez.gain_moyen()
-    print("Gain moyen uniforme : "+str(total/100))
+        sim = Simulation(0.5, 1000, 10, False, [2, 3, 4])
+        totaluni += sim.rez.gain_moyen()
+
+    x = ["MAB", "Uniforme"]
+    height = [totalmab / 100, totaluni / 100]
+    plt.bar(x, height, [0.5, 0.5])
+    plt.ylabel('Gain moyen')
+    plt.title("Comparaison des gains moyens entre méthodes\nlambda = 0.5 et nb émetteur = 10")
+    plt.show()
 
 # Calcule les gains moyens sur plusieurs simulations avec differents lambdas pour la stratégie MAB
 def test_variation_lambda():
@@ -310,10 +322,13 @@ def test_variation_lambda():
     for l in range(1, 50, 1):
         total = 0
         for i in range(1, 10, 1):
-            sim = Simulation(l/10, 1000, 10, True, [2,3,4])
+            sim = Simulation(l / 10, 1000, 10, True, [2, 3, 4])
             total += sim.rez.gain_moyen()
-        gain_moyen.append(total/10)
-    # fig, ax = plt.subplots()
+        gain_moyen.append(total / 10)
+    
+    plt.title("Méthode MAB : variation du gain moyen en fonction de lambda")
+    plt.xlabel("Lambda")
+    plt.ylabel("Gain moyen")
     plt.plot(range(1, 50, 1), gain_moyen)
     plt.show()
 
@@ -323,11 +338,21 @@ def test_variation_lambda_restreint(mab):
     for l in range(1, 9, 1):
         total = 0
         for i in range(0, 10, 1):
-            sim = Simulation(l / 10, 1000, 10, mab, [2,3,4])
+            sim = Simulation(l / 10, 1000, 10, mab, [2, 3, 4])
             total += sim.rez.gain_moyen()
         gain_moyen.append(total / 10)
-    # fig, ax = plt.subplots()
-    plt.plot(range(1, 9, 1), gain_moyen)
+
+    x = []       
+    for j in range(1, 9, 1):
+        x.append(str(j/10))
+
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.title(ch + " : variation du gain moyen en fonction de lambda")
+    plt.xlabel("Lambda")
+    plt.ylabel("Gain moyen")
+    plt.plot(x, gain_moyen)
     plt.show()
 
 # Test les gains moyens sur plusieurs simulations en fonction du nombre d'équipement
@@ -336,16 +361,22 @@ def test_variation_nb_equipements(mab):
     for e in range(1, 21, 1):
         total = 0
         for i in range(0, 10, 1):
-            sim = Simulation(0.5, 1000, e, mab, [2,3,4])
+            sim = Simulation(0.5, 1000, e, mab, [2, 3, 4])
             total += sim.rez.gain_moyen()
-        gain_moyen.append(total/10)
-    # fig, ax = plt.subplots()
+        gain_moyen.append(total / 10)
+    
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.title(ch + " : variation du gain moyen en fonction du nombre d'équipements")
+    plt.xlabel("Nb d'équipements")
+    plt.ylabel("Gain moyen")
     plt.plot(range(1, 21, 1), gain_moyen)
     plt.show()
 
-# Test le renvoie le pourcentage d'utilisation des stratégies utilisées
+# Test et renvoie le pourcentage d'utilisation des stratégies utilisées
 def test_utilisation_strats(mab):
-    Tabstrat = [2,4,8]
+    Tabstrat = [2, 4, 8]
     accumulation_utilisations = {}
     accumulation_utilisations[0] = 0
     for x in Tabstrat:
@@ -359,9 +390,151 @@ def test_utilisation_strats(mab):
     for i in accumulation_utilisations:
         total += accumulation_utilisations[i]
     total -= accumulation_utilisations[0]
+
+    tab = []
+    x = []
     for i in Tabstrat:
-        print("Stratégie "+str(i)+" : "+str((accumulation_utilisations[i]/total)*100)+" %")
+        tab.append((accumulation_utilisations[i] / total) * 100)
+        x.append(str(i))
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.bar(x, tab)
+    plt.ylabel("Pourcentage d'utilisation")
+    plt.title("Pourcentage d'utilisation des stratégies\nlambda = 0.5 et nb émetteur = 10 - " + ch)
+    plt.show()
+
+# Test et renvoie le pourcentage d'utilisation des stratégies en fonction de lambda 
+def test_utilisation_lambda(mab):
+    Tabstrat = [2, 4, 8]
+    accumulation_utilisations = {}
+    accumulation_utilisations[0] = [0]*8
+    
+    for x in Tabstrat:
+        accumulation_utilisations[x] = [0]*8
+        
+    for i in range(1, 9, 1):
+        for j in range(0, 20, 1):
+            sim = Simulation( i/10, 1000, 10, mab, Tabstrat)
+            utilisation = sim.rez.pourcentages_utilisation(Tabstrat)
+            for j in utilisation:
+                accumulation_utilisations[j][i-1] += utilisation[j]
+    
+    total = [0]*8
+    for i in Tabstrat:
+        for j in range(0, 8, 1):
+            total[j] += accumulation_utilisations[i][j]
+    x = []       
+    for j in range(1, 9, 1):
+        for i in Tabstrat:
+            accumulation_utilisations[i][j-1] = (accumulation_utilisations[i][j-1] /total[j-1]) * 100
+        x.append(str(j/10))
+   
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+
+    plt.title("Utilisation des stratégies en fonction de lambda\nnb émetteur = 10 " + ch)
+    plt.ylim(0, 60)
+    for i in Tabstrat:
+        plt.plot(x, accumulation_utilisations[i], label = "strat " + str(i))
+    
+    plt.ylabel("Pourcentage d'utilisation")
+    plt.xlabel("Lambda")
+    plt.legend()
+    plt.show() 
+
+# Pourcentage d'utilisation des stratégies en fonction du nombre d'équipements
+def test_utilisation_equip(mab):
+    Tabstrat = [2, 4, 8]
+    accumulation_utilisations = {}
+    accumulation_utilisations[0] = [0]*20
+    
+    for x in Tabstrat:
+        accumulation_utilisations[x] = [0]*20
+        
+    for i in range(1, 21,1):
+        for j in range(0, 20, 1):
+            sim = Simulation( 0.5, 1000, i, mab, Tabstrat)
+            utilisation = sim.rez.pourcentages_utilisation(Tabstrat)
+            for j in utilisation:
+                accumulation_utilisations[j][i-1] += utilisation[j]
+    
+    total = [0]*20
+    for i in Tabstrat:
+        for j in range(0, 20, 1):
+            total[j] += accumulation_utilisations[i][j]
+    x = []        
+    for j in range(0, 20, 1):
+        for i in Tabstrat:
+            accumulation_utilisations[i][j]= (accumulation_utilisations[i][j] /total[j]) * 100
+        x.append(str(j+1))
+   
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+
+    plt.title("Utilisation des stratégies en fonction du nb émetteurs\nlambda = 0.5 " + ch)
+    plt.ylim(0, 60)
+    for i in Tabstrat:
+        plt.plot(x, accumulation_utilisations[i], label = "strat " + str(i))
+    
+    plt.ylabel("Pourcentage d'utilisation")
+    plt.xlabel("Nb émetteurs")
+    plt.legend()
+    plt.show()
+
+# Calcule les récompenses obtenues a chaque étape quelque soit la strategie
+def test_gain_emetteur(mab):
+    gain = []
+    sim = Simulation(0.5, 1000, 10, mab, [2, 3, 4])
+    for i in range(0, sim.rez.nbemetteurs, 1):
+        gain.append(sim.rez.emetteurs[i].gain_moyen())
+    
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.title(ch + " : gain moyen pour chaque émetteur\nlambda = 0.5 et nb émetteur = 10")
+    plt.xlabel("Emetteur")
+    plt.ylabel("Gain moyen")
+    plt.bar(range(0, sim.rez.nbemetteurs, 1), gain)
+    plt.show()
+
+# Nombre de paquets envoyés et transmis par émetteur
+def test_transmis_envoyes(mab):
+    transmis = []
+    envoyes = []
+    sim = Simulation(0.5, 1000, 10, mab, [2, 3, 4])
+    for i in range(0, sim.rez.nbemetteurs, 1):
+        envoyes.append(sim.rez.emetteurs[i].paquets_envoyes)
+        transmis.append(sim.rez.emetteurs[i].reussite_emetteur())
+
+    ch = "Méthode uniforme"
+    if mab :
+        ch ="Méthode MAB"
+    plt.title(ch + " : Nombre de paquets envoyés et transmis par émetteurs\nlambda = 0.5 et nb émetteur = 10")
+    plt.xlabel("Emetteur")
+    plt.ylabel("Nombre de paquets")
+    plt.bar(range(0, sim.rez.nbemetteurs, 1), envoyes, label = "envoyés")
+    plt.bar(range(0, sim.rez.nbemetteurs, 1), transmis, label = "transmis")
+    plt.legend(loc = 'lower right')
+    plt.show()
 
 
 # Appeler les fonctions cas de test ici :
-test_utilisation_strats(True)
+# test_transmis_envoyes(True)
+# test_transmis_envoyes(False)
+# # test_gain_emetteur(True)
+# test_gain_emetteur(False)
+# # test_variation_lambda_restreint(True)
+# test_variation_lambda_restreint(False)
+# test_variation_nb_equipements(True)
+# test_variation_nb_equipements(False)
+# test_mab_vs_uniforme()
+# test_utilisation_strats(True)
+# test_utilisation_strats(False)
+# test_utilisation_lambda(True)
+# test_utilisation_lambda(False)
+# test_utilisation_equip(True)
+# test_utilisation_equip(False)
+
