@@ -191,7 +191,7 @@ class emetteur:
         total = 0
         for s in self.strat:
             total += s.reward_total / s.nbutilisations
-        return total / 3
+        return total / len(self.strat)
     
     def reussite_emetteur(self):
         succes = 0
@@ -301,12 +301,13 @@ def exponentielle(intensite):
 def test_mab_vs_uniforme():
     totalmab = 0
     totaluni = 0
+    tabStrat = [2, 4, 8]
     for i in range(0, 100, 1):
-        sim = Simulation(0.5, 1000, 10, True, [2, 3, 4])
+        sim = Simulation(0.5, 1000, 10, True, tabStrat)
         totalmab += sim.rez.gain_moyen()
 
     for i in range(0, 100, 1):
-        sim = Simulation(0.5, 1000, 10, False, [2, 3, 4])
+        sim = Simulation(0.5, 1000, 10, False, tabStrat)
         totaluni += sim.rez.gain_moyen()
     
     x = ["MAB", "Uniforme"]
@@ -344,7 +345,7 @@ def test_variation_lambda_restreint(mab):
     for l in range(1, 9, 1):
         total = 0
         for i in range(0, 10, 1):
-            sim = Simulation(l / 10, 1000, 10, mab, [2, 3, 4])
+            sim = Simulation(l / 10, 1000, 10, mab, [2, 4, 8])
             total += sim.rez.gain_moyen()
         gain_moyen.append(total / 10)
 
@@ -367,7 +368,7 @@ def test_variation_nb_equipements(mab):
     for e in range(1, 50, 1):
         total = 0
         for i in range(0, 10, 1):
-            sim = Simulation(0.5, 1000, e, mab, [2, 3, 4])
+            sim = Simulation(0.5, 1000, e, mab, [2, 4, 8])
             total += sim.rez.gain_moyen()
         gain_moyen.append(total / 10)
     
@@ -382,14 +383,14 @@ def test_variation_nb_equipements(mab):
 
 # Test et renvoie le pourcentage d'utilisation des stratégies utilisées
 def test_utilisation_strats(mab):
-    Tabstrat = [2, 4, 8]
+    tabstrat = [2, 4, 8]
     accumulation_utilisations = {}
     accumulation_utilisations[0] = 0
-    for x in Tabstrat:
+    for x in tabstrat:
         accumulation_utilisations[x] = 0
     for i in range(0, 100, 1):
-        sim = Simulation(0.5, 1000, 10, mab, Tabstrat)
-        utilisation = sim.rez.pourcentages_utilisation(Tabstrat)
+        sim = Simulation(0.5, 1000, 4, mab, tabstrat)
+        utilisation = sim.rez.pourcentages_utilisation(tabstrat)
         for j in utilisation:
             accumulation_utilisations[j] += utilisation[j]
     total = 0
@@ -399,7 +400,7 @@ def test_utilisation_strats(mab):
 
     tab = []
     x = []
-    for i in Tabstrat:
+    for i in tabstrat:
         tab.append((accumulation_utilisations[i] / total) * 100)
         x.append(str(i))
     print("Pourcentage d'utilisation des stratégies", tab)
@@ -413,27 +414,27 @@ def test_utilisation_strats(mab):
 
 # Test et renvoie le pourcentage d'utilisation des stratégies en fonction de lambda 
 def test_utilisation_lambda(mab):
-    Tabstrat = [2, 4, 8]
+    tabstrat = [2, 4, 8]
     accumulation_utilisations = {}
     accumulation_utilisations[0] = [0]*8
     
-    for x in Tabstrat:
+    for x in tabstrat:
         accumulation_utilisations[x] = [0]*8
         
     for i in range(1, 9, 1):
         for j in range(0, 20, 1):
-            sim = Simulation( i/10, 1000, 10, mab, Tabstrat)
-            utilisation = sim.rez.pourcentages_utilisation(Tabstrat)
+            sim = Simulation( i/10, 1000, 10, mab, tabstrat)
+            utilisation = sim.rez.pourcentages_utilisation(tabstrat)
             for j in utilisation:
                 accumulation_utilisations[j][i-1] += utilisation[j]
     
     total = [0]*8
-    for i in Tabstrat:
+    for i in tabstrat:
         for j in range(0, 8, 1):
             total[j] += accumulation_utilisations[i][j]
     x = []       
     for j in range(1, 9, 1):
-        for i in Tabstrat:
+        for i in tabstrat:
             accumulation_utilisations[i][j-1] = (accumulation_utilisations[i][j-1] /total[j-1]) * 100
         x.append(str(j/10))
    
@@ -443,7 +444,7 @@ def test_utilisation_lambda(mab):
 
     plt.title("Utilisation des stratégies en fonction de lambda\nnb émetteur = 10 " + ch)
     plt.ylim(0, 60)
-    for i in Tabstrat:
+    for i in tabstrat:
         plt.plot(x, accumulation_utilisations[i], label = "strat " + str(i))
     
     plt.ylabel("Pourcentage d'utilisation")
@@ -453,27 +454,27 @@ def test_utilisation_lambda(mab):
 
 # Pourcentage d'utilisation des stratégies en fonction du nombre d'équipements
 def test_utilisation_equip(mab):
-    Tabstrat = [2, 4, 8]
+    tabstrat = [2, 4, 8]
     accumulation_utilisations = {}
     accumulation_utilisations[0] = [0]*20
     
-    for x in Tabstrat:
+    for x in tabstrat:
         accumulation_utilisations[x] = [0]*20
         
     for i in range(1, 21,1):
         for j in range(0, 20, 1):
-            sim = Simulation( 0.5, 1000, i, mab, Tabstrat)
-            utilisation = sim.rez.pourcentages_utilisation(Tabstrat)
+            sim = Simulation( 0.5, 1000, i, mab, tabstrat)
+            utilisation = sim.rez.pourcentages_utilisation(tabstrat)
             for j in utilisation:
                 accumulation_utilisations[j][i-1] += utilisation[j]
     
     total = [0]*20
-    for i in Tabstrat:
+    for i in tabstrat:
         for j in range(0, 20, 1):
             total[j] += accumulation_utilisations[i][j]
     x = []        
     for j in range(0, 20, 1):
-        for i in Tabstrat:
+        for i in tabstrat:
             accumulation_utilisations[i][j]= (accumulation_utilisations[i][j] /total[j]) * 100
         x.append(str(j+1))
    
@@ -483,7 +484,7 @@ def test_utilisation_equip(mab):
 
     plt.title("Utilisation des stratégies en fonction du nb émetteurs\nlambda = 0.5 " + ch)
     plt.ylim(0, 60)
-    for i in Tabstrat:
+    for i in tabstrat:
         plt.plot(x, accumulation_utilisations[i], label = "strat " + str(i))
     
     plt.ylabel("Pourcentage d'utilisation")
@@ -494,7 +495,7 @@ def test_utilisation_equip(mab):
 # Calcule les récompenses obtenues a chaque étape quelque soit la strategie
 def test_gain_emetteur(mab):
     gain = []
-    sim = Simulation(0.5, 1000, 10, mab, [2, 3, 4])
+    sim = Simulation(0.5, 1000, 10, mab, [2, 4, 8])
     for i in range(0, sim.rez.nbemetteurs, 1):
         gain.append(sim.rez.emetteurs[i].gain_moyen())
     
@@ -511,7 +512,7 @@ def test_gain_emetteur(mab):
 def test_transmis_envoyes(mab):
     transmis = []
     envoyes = []
-    sim = Simulation(0.5, 1000, 10, mab, [2, 3, 4])
+    sim = Simulation(0.5, 1000, 10, mab, [2, 4, 8])
     for i in range(0, sim.rez.nbemetteurs, 1):
         envoyes.append(sim.rez.emetteurs[i].paquets_envoyes)
         transmis.append(sim.rez.emetteurs[i].reussite_emetteur())
@@ -535,7 +536,6 @@ def test_transmis_envoyes(mab):
 # test_gain_emetteur(False)
 # test_variation_lambda(True)
 # test_variation_lambda(False)
-# test_variation_lambda_restreint(False)
 # test_variation_nb_equipements(True)
 # test_variation_nb_equipements(False)
 # test_mab_vs_uniforme()
