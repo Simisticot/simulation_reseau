@@ -1,4 +1,4 @@
-# Simulation_reseau
+# Simulation Réseau
 Simulation d'un réseau au sein duquel une station de base reçoit les paquets envoyés par N émetteurs selon un processus de poisson.  
 Le but est de comparer différentes stratégies d'envois de paquets dans l'optique de minimiser les paquets perdus via l'interférence.  
 Les deux stratégies comparées sont une stratégie aléatoire selon une loi uniforme et une stratégie d'apprentissage par renforcement.  
